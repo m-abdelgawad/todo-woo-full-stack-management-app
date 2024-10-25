@@ -1,0 +1,53 @@
+version: "3"
+
+services:
+
+  db:
+    container_name: todowoo_db
+    image: todowoo_db
+    build: ./postgres
+    volumes:
+      - ./mounts/postgres_data/:/var/lib/postgresql/data/
+    networks:
+      - todowoo-back-end
+    restart: always
+
+  app:
+    container_name: todowoo_app
+    image: todowoo_app
+    build: ./app
+    depends_on:
+      - db
+    volumes:
+      - todowoo-static:/website/static/
+      - ./mounts/media:/website/media/
+    env_file:
+      - ./app/.env
+    networks:
+      - todowoo-front-end
+      - todowoo-back-end
+    restart: always
+
+  nginx:
+    container_name: todowoo_nginx
+    image: todowoo_nginx
+    build: ./nginx
+    volumes:
+      - todowoo-static:/static
+      - ./mounts/media:/media
+      - ./mounts/letsencrypt:/etc/letsencrypt
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - app
+    networks:
+      - todowoo-front-end
+    restart: always
+
+volumes:
+  todowoo-static:
+
+networks:
+  todowoo-front-end:
+  todowoo-back-end:
